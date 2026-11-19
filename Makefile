@@ -63,8 +63,11 @@ test-unit:
 	go test -count=1 -v $(GO_PKGS)
 	@echo "✓ Unit tests passed"
 
-test-integration: test-unit
-	@echo "Integration tests (currently same as unit tests)"
+test-integration:
+	@echo "Checking Docker..."
+	@docker info > /dev/null 2>&1 || (echo "❌ Docker is not running. Integration tests start containers: start Docker and retry."; exit 1)
+	@echo "Running integration tests..."
+	cd integration && go test -count=1 -v ./...
 	@echo "✓ Integration tests passed"
 
 build:
