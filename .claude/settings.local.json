@@ -24,11 +24,18 @@
       "Bash(git branch *)",
       "Bash(jq *)",
       "Bash(gh *)",
-      "Bash(make *)",
-      "Bash(golangci-lint run *)",
-      "Bash(python3 -m yaml -c .github/workflows/backend.yml)",
+      "Bash(gh pr *)",
       "Bash(gh run *)",
-      "Bash(gofmt -w ./internal/)"
+      "Bash(make *)",
+      "Bash(make lint *)",
+      "Bash(make fmt *)",
+      "Bash(make test-unit *)",
+      "Bash(make build *)",
+      "Bash(go install *)",
+      "Bash(golangci-lint run *)",
+      "Bash(gofmt -w ./internal/)",
+      "Bash(python3 -m yaml -c .github/workflows/backend.yml)",
+      "Bash(~/.local/bin/golangci-lint run *)"
     ]
   }
 }
