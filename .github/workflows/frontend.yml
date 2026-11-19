@@ -100,7 +100,7 @@ jobs:
         run: |
           docker compose up -d --build
           for i in $(seq 1 90); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/cameras)
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/cameras || true)
             if [ "$code" = "401" ]; then echo "✓ Backend is up"; exit 0; fi
             sleep 2
           done

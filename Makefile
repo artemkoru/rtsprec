@@ -105,7 +105,7 @@ docker-up: docker-check
 	$(COMPOSE) up -d
 	@echo "Waiting for the backend on http://localhost:$(HTTP_PORT) ..."
 	@for i in $$(seq 1 60); do \
-		code=$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:$(HTTP_PORT)/api/cameras); \
+		code=$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:$(HTTP_PORT)/api/cameras || true); \
 		if [ "$$code" = "401" ]; then echo "✓ Backend is up: http://localhost:$(HTTP_PORT)  (sign in as the AUTH_BASIC_USERNAME user)"; exit 0; fi; \
 		sleep 2; \
 	done; \
