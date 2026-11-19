@@ -1,0 +1,26 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - staticcheck      # Catches bugs and suspicious constructs
+    - errcheck         # Checks error returns
+    - unused           # Detects unused variables
+    - ineffassign      # Detects ineffective assignments
+    - govet            # Go vet linter
+
+issues:
+  exclude-dirs:
+    - vendor
+    - internal/capture
+  exclude-rules:
+    - path: internal/capture
+      linters:
+        - all
+    - path: .*_test\.go
+      linters:
+        - errcheck
+
+output:
+  format: colored-line-number

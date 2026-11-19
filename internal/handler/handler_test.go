@@ -107,11 +107,11 @@ func TestCameraHandler_AddCamera(t *testing.T) {
 
 	// Create request body
 	reqData := map[string]interface{}{
-		"name":                       "New Camera",
-		"rtsp_url":                   "rtsp://example.com/stream",
-		"motion_sensitivity":         50,
-		"motion_timeout":             120,
-		"video_duration_minutes":     5,
+		"name":                        "New Camera",
+		"rtsp_url":                    "rtsp://example.com/stream",
+		"motion_sensitivity":          50,
+		"motion_timeout":              120,
+		"video_duration_minutes":      5,
 		"screenshot_interval_minutes": 0,
 	}
 
@@ -231,8 +231,8 @@ func TestMotionHandler_GetEvents(t *testing.T) {
 
 	// Add test event
 	event := &domain.MotionEvent{
-		ID:       uuid.New().String(),
-		CameraID: "cam1",
+		ID:        uuid.New().String(),
+		CameraID:  "cam1",
 		StartTime: time.Now(),
 	}
 	mockService.CreateEvent(context.Background(), event)

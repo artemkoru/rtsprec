@@ -30,11 +30,11 @@ type MotionEvent struct {
 }
 
 type TimelineItem struct {
-	Type      string      `json:"type"` // "video" or "event"
-	StartTime time.Time   `json:"start_time"`
-	EndTime   time.Time   `json:"end_time"`
-	Duration  int         `json:"duration_seconds"`
-	Video     *VideoFile  `json:"video,omitempty"`
+	Type      string       `json:"type"` // "video" or "event"
+	StartTime time.Time    `json:"start_time"`
+	EndTime   time.Time    `json:"end_time"`
+	Duration  int          `json:"duration_seconds"`
+	Video     *VideoFile   `json:"video,omitempty"`
 	Event     *MotionEvent `json:"event,omitempty"`
 }
 

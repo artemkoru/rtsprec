@@ -10,10 +10,10 @@ import (
 )
 
 type Segment struct {
-	Index    int
-	Filename string
-	Duration float64
-	Path     string
+	Index     int
+	Filename  string
+	Duration  float64
+	Path      string
 	CreatedAt time.Time
 }
 
@@ -24,8 +24,8 @@ type HLSGenerator struct {
 	segmentsPerList int
 	logger          *slog.Logger
 
-	segments    []*Segment
-	segmentsMu  sync.RWMutex
+	segments     []*Segment
+	segmentsMu   sync.RWMutex
 	currentIndex int
 }
 
@@ -66,10 +66,10 @@ func (h *HLSGenerator) AddSegment(segmentData []byte) (string, error) {
 
 	// Create segment metadata
 	segment := &Segment{
-		Index:    h.currentIndex,
-		Filename: segmentFilename,
-		Duration: float64(h.segmentDuration),
-		Path:     segmentPath,
+		Index:     h.currentIndex,
+		Filename:  segmentFilename,
+		Duration:  float64(h.segmentDuration),
+		Path:      segmentPath,
 		CreatedAt: time.Now(),
 	}
 

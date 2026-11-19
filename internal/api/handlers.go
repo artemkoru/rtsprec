@@ -20,12 +20,12 @@ import (
 )
 
 type APIServer struct {
-	db               *db.DB
-	configStore      *config.ConfigStore
-	archiveManager   *archive.ArchiveManager
-	s3Uploader       *storage.S3Uploader
-	motionDetectors  map[string]*motion.MotionDetector
-	logger           *slog.Logger
+	db              *db.DB
+	configStore     *config.ConfigStore
+	archiveManager  *archive.ArchiveManager
+	s3Uploader      *storage.S3Uploader
+	motionDetectors map[string]*motion.MotionDetector
+	logger          *slog.Logger
 }
 
 func NewAPIServer(database *db.DB, cfg *config.ConfigStore, arch *archive.ArchiveManager, uploader *storage.S3Uploader) *APIServer {

@@ -21,11 +21,11 @@ type App struct {
 
 // Services holds all service instances for dependency injection.
 type Services struct {
-	Camera   interface{} // CameraService
-	Motion   interface{} // MotionService
-	Video    interface{} // VideoService
-	Archive  interface{} // ArchiveService
-	Auth     interface{} // AuthService
+	Camera  interface{} // CameraService
+	Motion  interface{} // MotionService
+	Video   interface{} // VideoService
+	Archive interface{} // ArchiveService
+	Auth    interface{} // AuthService
 }
 
 // New creates and initializes a new application.

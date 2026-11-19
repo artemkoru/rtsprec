@@ -184,8 +184,8 @@ func TestMotionService_GetEvents(t *testing.T) {
 
 	// Add test data
 	event := &domain.MotionEvent{
-		ID:       "event1",
-		CameraID: "cam1",
+		ID:        "event1",
+		CameraID:  "cam1",
 		StartTime: time.Now(),
 	}
 	mockRepo.Create(context.Background(), event)
@@ -206,8 +206,8 @@ func TestMotionService_CreateEvent(t *testing.T) {
 	service := NewMotionService(mockRepo, getTestLogger())
 
 	event := &domain.MotionEvent{
-		ID:       uuid.New().String(),
-		CameraID: "cam1",
+		ID:        uuid.New().String(),
+		CameraID:  "cam1",
 		StartTime: time.Now(),
 	}
 

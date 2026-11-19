@@ -25,19 +25,19 @@ type MotionEvent struct {
 }
 
 type MotionDetector struct {
-	cameraID           string
-	db                 *db.DB
-	sensitivity        int     // 0-100 scale
-	frameSkip          int     // analyze every Nth frame
-	motionThreshold    float64 // percentage of pixels that changed
-	logger             *slog.Logger
+	cameraID        string
+	db              *db.DB
+	sensitivity     int     // 0-100 scale
+	frameSkip       int     // analyze every Nth frame
+	motionThreshold float64 // percentage of pixels that changed
+	logger          *slog.Logger
 
-	currentEvent       *MotionEvent
-	eventMutex         sync.RWMutex
-	lastMotionTime     time.Time
-	motionTimeoutSecs  int
+	currentEvent      *MotionEvent
+	eventMutex        sync.RWMutex
+	lastMotionTime    time.Time
+	motionTimeoutSecs int
 
-	frameCount         int
+	frameCount int
 }
 
 func NewMotionDetector(cameraID string, database *db.DB, sensitivity int, frameSkip int, motionTimeout int) *MotionDetector {
