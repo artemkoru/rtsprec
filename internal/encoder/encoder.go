@@ -23,10 +23,10 @@ type EncodedChunk struct {
 }
 
 type VideoEncoder struct {
-	cameraID           string
-	chunkDuration      time.Duration
-	outputPath         string
-	logger             *slog.Logger
+	cameraID      string
+	chunkDuration time.Duration
+	outputPath    string
+	logger        *slog.Logger
 
 	chunkChan          chan EncodedChunk
 	frameBuffer        []capture.FrameData

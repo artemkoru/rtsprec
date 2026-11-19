@@ -17,13 +17,13 @@ import (
 )
 
 type S3Uploader struct {
-	client          *s3.Client
-	bucket          string
-	pathPrefix      string
-	logger          *slog.Logger
-	presigner       *s3.PresignClient
-	maxRetries      int
-	retryBackoff    time.Duration
+	client       *s3.Client
+	bucket       string
+	pathPrefix   string
+	logger       *slog.Logger
+	presigner    *s3.PresignClient
+	maxRetries   int
+	retryBackoff time.Duration
 }
 
 func NewS3Uploader(region, bucket, pathPrefix, accessKey, secretKey string) (*S3Uploader, error) {
@@ -197,12 +197,12 @@ func IsRetryableError(err error) bool {
 	code := ae.ErrorCode()
 	// List of retryable error codes
 	retryableCodes := map[string]bool{
-		"ThrottlingException":       true,
-		"RequestLimitExceeded":      true,
-		"SlowDown":                  true,
-		"ServiceUnavailable":        true,
-		"RequestTimeout":            true,
-		"OperationAborted":          true,
+		"ThrottlingException":  true,
+		"RequestLimitExceeded": true,
+		"SlowDown":             true,
+		"ServiceUnavailable":   true,
+		"RequestTimeout":       true,
+		"OperationAborted":     true,
 	}
 
 	return retryableCodes[code]

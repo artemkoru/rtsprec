@@ -25,10 +25,10 @@ func SetupDependencies(db *sql.DB, logger *slog.Logger) (*Services, error) {
 	authService := service.NewAuthService(authRepo, logger)
 
 	return &Services{
-		Camera:   cameraService,
-		Motion:   motionService,
-		Video:    videoService,
-		Archive:  archiveService,
-		Auth:     authService,
+		Camera:  cameraService,
+		Motion:  motionService,
+		Video:   videoService,
+		Archive: archiveService,
+		Auth:    authService,
 	}, nil
 }

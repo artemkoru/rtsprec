@@ -16,10 +16,10 @@ import (
 
 type Config struct {
 	Server struct {
-		Port     int    `yaml:"port"`
-		Host     string `yaml:"host"`
-		TLSCert  string `yaml:"tls_cert"`
-		TLSKey   string `yaml:"tls_key"`
+		Port    int    `yaml:"port"`
+		Host    string `yaml:"host"`
+		TLSCert string `yaml:"tls_cert"`
+		TLSKey  string `yaml:"tls_key"`
 	} `yaml:"server"`
 
 	AWS struct {
@@ -31,10 +31,10 @@ type Config struct {
 	} `yaml:"aws"`
 
 	Auth struct {
-		Method       string `yaml:"method"` // "oidc" or "basic"
-		OIDCProvider string `yaml:"oidc_provider"`
-		OIDCClientID string `yaml:"oidc_client_id"`
-		OIDCSecret   string `yaml:"oidc_secret"`
+		Method        string `yaml:"method"` // "oidc" or "basic"
+		OIDCProvider  string `yaml:"oidc_provider"`
+		OIDCClientID  string `yaml:"oidc_client_id"`
+		OIDCSecret    string `yaml:"oidc_secret"`
 		BasicUsername string `yaml:"basic_username"`
 		BasicPassword string `yaml:"basic_password"`
 	} `yaml:"auth"`

@@ -12,7 +12,7 @@ type Timeline struct {
 
 // TimelineItem represents either a video segment or a motion event in the timeline.
 type TimelineItem struct {
-	Type      string        // "video" or "event"
+	Type      string // "video" or "event"
 	StartTime time.Time
 	EndTime   time.Time
 	Duration  int
