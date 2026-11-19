@@ -11,7 +11,8 @@ func registerPublicRoutes(mux *http.ServeMux, a *App) {
 	mux.HandleFunc("POST /api/auth/logout", handleLogout)
 }
 
-// registerRoutes registers routes that require an authenticated session.
+// registerRoutes registers the API and media routes. They are wrapped in
+// AuthMiddleware by Init; the web UI is served separately (see spa.go).
 // Handlers come from internal/api; the paths match the previous binary.
 func registerRoutes(mux *http.ServeMux, a *App) {
 	apiServer := a.apiServer
@@ -29,9 +30,6 @@ func registerRoutes(mux *http.ServeMux, a *App) {
 	// HLS routes
 	mux.HandleFunc("GET /hls/{camera}/playlist.m3u8", a.hlsHandler.HandlePlaylist)
 	mux.HandleFunc("GET /hls/{camera}/{file}", a.hlsHandler.HandleSegment)
-
-	// Static files (React app)
-	mux.Handle("/", http.FileServer(http.Dir("./static")))
 }
 
 // handleLogout returns the same fixed response as the previous binary.

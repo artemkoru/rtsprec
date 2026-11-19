@@ -1,4 +1,4 @@
-.PHONY: help tools fmt fmt-check vet lint golangci test test-unit test-integration build clean docker-check docker-build docker-up docker-down docker-logs
+.PHONY: help tools fmt fmt-check vet lint golangci test test-unit test-integration web-build build clean docker-check docker-build docker-up docker-down docker-logs
 
 # Local Docker stack (compose.yaml). HTTP_PORT is exported so compose publishes the same port.
 HTTP_PORT ?= 8080
@@ -79,7 +79,16 @@ test-integration:
 	cd integration && go test -count=1 -v ./...
 	@echo "✓ Integration tests passed"
 
-build:
+# Build the web UI into web/dist; keeps the committed placeholder so the Go embed always has a file.
+web-build:
+	@echo "Building web UI..."
+	find web/dist -mindepth 1 ! -name .gitkeep -delete 2>/dev/null || true
+	cd web && npm ci && npm run build
+	touch web/dist/.gitkeep
+	@test -f web/dist/index.html || (echo "❌ Web UI build did not produce web/dist/index.html"; exit 1)
+	@echo "✓ Web UI built"
+
+build: web-build
 	@echo "Building binary..."
 	go build -o rtsprec ./cmd/rtsprec
 	@test -f rtsprec || (echo "❌ Binary not created"; exit 1)

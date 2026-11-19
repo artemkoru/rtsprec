@@ -73,6 +73,8 @@ The frontend will be available at `http://localhost:5173` in development.
 
 Run the backend and the web UI on one machine. The UI talks to the backend through the Vite dev proxy, so both are reached on `localhost`.
 
+The built binary and the Docker image serve the web UI themselves on the backend port: open `http://localhost:8080/` after `make build` (or after `make docker-up`, once it is available). The Vite dev server on port 5173 is for development with hot reload.
+
 ### Option A: backend in Docker (recommended)
 
 Docker Compose starts the backend and a local S3-compatible server (SeaweedFS). Nothing is installed on the host except Docker and Node.js.

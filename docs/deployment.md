@@ -66,6 +66,8 @@ The binary reads its configuration only from environment variables. The `-config
 
 ## Web UI Access
 
+The binary serves the web UI itself at `/` on the HTTP port; no separate directory is needed next to it. The UI shell is public, while `/api/*` and `/hls/*` require a session.
+
 The web UI uses the session cookie set by `POST /api/auth/login`. The cookie is `HttpOnly`, `Secure` and `SameSite=Lax` (see `internal/auth/auth.go`).
 
 - On `http://localhost` browsers store `Secure` cookies, so local development works over plain HTTP.
