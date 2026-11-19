@@ -12,7 +12,9 @@ The web UI in `web/` is still the Vite template: `App.jsx` shows "Get started" a
 - Requests that return 401 send the user back to the login screen.
 - The pages keep their current API calls: `GET /api/cameras`, `GET /api/archive?camera_id=&date=`, and `GET /hls/{camera}/playlist.m3u8` for video. No new backend endpoints are added.
 
-Out of scope for this change: embedding `web/dist` into the backend binary, changing how static files are served, and any backend route or auth behavior change. These are decided in a later change.
+- One backend fix is included because the UI cannot work without it: the login response sets the `session_token` cookie with `Path: "/"`. Without it the browser scopes the cookie to `/api/auth` and every other API call returns 401 after login. Found during browser testing.
+
+Out of scope for this change: embedding `web/dist` into the backend binary, changing how static files are served, and any other backend route or auth behavior change. These are decided in a later change.
 
 ## Capabilities
 
@@ -29,4 +31,4 @@ Out of scope for this change: embedding `web/dist` into the backend binary, chan
 - `web/src/` only: `App.jsx`, a new login page, routing, a small API helper for 401 handling, and the pages' imports.
 - `web/package.json`: one new dependency for routing (choice recorded in design.md).
 - Frontend CI (`frontend.yml`) runs lint and build; these must keep passing.
-- Backend is not changed. The HLS player receives the session cookie from the login response because the page and the stream are on the same origin.
+- Backend: one line in `internal/auth/auth.go` (cookie `Path: "/"`) and a check for it in `internal/app/app_test.go`. No other backend change. The HLS player receives the session cookie from the login response because the page and the stream are on the same origin.

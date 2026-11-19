@@ -64,6 +64,13 @@ The binary reads its configuration only from environment variables. The `-config
 | `S3_ACCESS_KEY_ID` | empty | S3 access key ID |
 | `S3_SECRET_ACCESS_KEY` | empty | S3 secret access key |
 
+## Web UI Access
+
+The web UI uses the session cookie set by `POST /api/auth/login`. The cookie is `HttpOnly`, `Secure` and `SameSite=Lax` (see `internal/auth/auth.go`).
+
+- On `http://localhost` browsers store `Secure` cookies, so local development works over plain HTTP.
+- On any other host the UI must be served over HTTPS. Over plain HTTP the browser drops the cookie: login appears to succeed, but later requests return 401 and the UI sends the user back to the login page.
+
 ## Rollback
 ```bash
 cp /opt/rtsprec.old/rtsprec /opt/rtsprec/

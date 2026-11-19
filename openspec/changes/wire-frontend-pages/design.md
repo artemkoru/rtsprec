@@ -15,12 +15,13 @@ Because the HLS player in `Live.jsx` loads `/hls/{camera}/playlist.m3u8` as a pl
 
 **Non-Goals:**
 - Embedding `web/dist` into the backend binary (later change).
-- Changing backend routes, auth rules, or cookie settings.
+- Changing backend routes, auth rules, or cookie settings beyond the cookie path (see Decisions).
 - Visual redesign of the pages.
 - Multi-user management or password change UI.
 
 ## Decisions
 
+- **Cookie path is `/`.** The login response previously set `session_token` without `Path`, so the browser stored it for `/api/auth` only. Setting `Path: "/"` makes it available to all API and HLS requests, which is what the UI needs. A Go test in `internal/app` asserts the path so the regression is caught. Found by browser testing, not by the earlier curl checks, which sent the cookie explicitly.
 - **Routing library: `react-router-dom` v7.** It is the common choice for React SPAs, works with Vite's dev server and with a static file server that falls back to `index.html`. Alternative: state-based tabs in `App.jsx`. Rejected because paths are needed for reload and for the later embedded build. Version is pinned in `package.json` and the lockfile is updated in the same change.
 - **Session state comes from the cookie, not from localStorage.** Login sets the cookie; the frontend never stores the token itself. The backend `session_token` cookie is `HttpOnly`, so JavaScript cannot read it, and that is correct. The frontend learns that a session is valid by calling `GET /api/cameras`: 200 means logged in, 401 means not. Alternative: read the token from the login JSON response and keep it in memory. Rejected: the HLS player would not get it, and a reload would lose it.
 - **One fetch helper** (`web/src/api.js`) wraps `fetch`, sends `credentials: 'same-origin'`, and on 401 navigates to `/login`. Pages call the helper instead of `fetch` directly. This keeps the 401 handling in one place.

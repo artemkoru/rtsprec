@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../api.js';
 
 export default function Live() {
   const [cameras, setCameras] = useState([]);
@@ -11,8 +12,7 @@ export default function Live() {
 
   const fetchCameras = async () => {
     try {
-      const response = await fetch('/api/cameras');
-      const data = await response.json();
+      const data = await apiFetch('/api/cameras');
       setCameras(data || []);
       if (data && data.length > 0) {
         setSelectedCamera(data[0].id);

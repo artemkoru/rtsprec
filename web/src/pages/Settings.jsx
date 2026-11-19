@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../api.js';
 
 export default function Settings() {
   const [cameras, setCameras] = useState([]);
@@ -10,8 +11,7 @@ export default function Settings() {
 
   const fetchCameras = async () => {
     try {
-      const response = await fetch('/api/cameras');
-      const data = await response.json();
+      const data = await apiFetch('/api/cameras');
       setCameras(data || []);
     } catch (error) {
       console.error('Failed to fetch cameras:', error);

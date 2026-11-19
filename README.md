@@ -69,6 +69,90 @@ npm run build
 
 The frontend will be available at `http://localhost:5173` in development.
 
+## Local Run
+
+Run the backend and the web UI on one machine. The UI talks to the backend through the Vite dev proxy, so both are reached on `localhost`.
+
+### 1. Prerequisites
+
+- Go 1.26.0, Node.js 20, npm
+- An S3 bucket the backend can reach at startup: the backend checks the bucket with `HeadBucket` and exits if it cannot. Use a real AWS bucket, or an S3-compatible server you control.
+- Docker only if you want to run the integration tests (`make test-integration`).
+
+### 2. Create local directories
+
+```bash
+mkdir -p data/hls
+```
+
+The database, the encryption key and HLS output live under `./data`. The encoder writes chunks to `/var/cache/rtsprec/video`, which is hard-coded; create it and make it writable for your user if you want recording to work when a camera is enabled.
+
+### 3. Start the backend
+
+```bash
+make build                       # produces ./rtsprec
+
+DB_PATH=./data/rtsprec.db \
+ENCRYPTION_KEY_PATH=./data/encryption.key \
+HLS_OUTPUT_PATH=./data/hls \
+HTTP_PORT=8080 \
+AUTH_METHOD=basic \
+AUTH_BASIC_USERNAME=admin \
+AUTH_BASIC_PASSWORD=change-me \
+S3_BUCKET=your-bucket \
+S3_REGION=us-east-1 \
+S3_ACCESS_KEY_ID=your-access-key \
+S3_SECRET_ACCESS_KEY=your-secret-key \
+./rtsprec
+```
+
+Leave `AWS_ENDPOINT_URL` unset for AWS. For another S3-compatible server, set it to that server's URL.
+
+The backend logs `starting HTTP server` with the port when it is ready. A request to `GET /api/cameras` without a token returns `401`, which is expected.
+
+### 4. Start the web UI
+
+In a second terminal:
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+If the backend does not listen on port 8080, set the address the proxy forwards to:
+
+```bash
+BACKEND_URL=http://localhost:9090 npm run dev
+```
+
+### 5. Sign in
+
+Open `http://localhost:5173/login` and sign in with `AUTH_BASIC_USERNAME` and `AUTH_BASIC_PASSWORD`. After sign-in the app opens the Live page. The session cookie works on `http://localhost`; on other hosts the UI must be served over HTTPS (see [docs/deployment.md](docs/deployment.md#web-ui-access)).
+
+### 6. Add a camera
+
+The Settings page does not save cameras yet, so add one through the API with the token from the login response:
+
+```bash
+TOKEN=$(curl -s -X POST -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"change-me"}' \
+  http://localhost:8080/api/auth/login | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+
+curl -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"name":"Front door","rtsp_url":"rtsp://user:pass@192.168.1.10:554/stream1","motion_sensitivity":50,"motion_timeout":120,"video_duration_minutes":15,"screenshot_interval_minutes":0}' \
+  http://localhost:8080/api/cameras
+```
+
+The camera appears in the Live page list. Capture starts for enabled cameras when the backend starts, so restart the backend after adding a camera to start recording it.
+
+### Troubleshooting
+
+- **Backend exits at start with an S3 error:** the bucket does not exist, the credentials are wrong, or the endpoint is unreachable. Check the bucket name and region first.
+- **Sign-in shows "Cannot reach the server":** the backend is not running or the proxy points to a different port. Check `BACKEND_URL`.
+- **Sign-in succeeds but the page goes back to login:** the browser is not sending the session cookie. Check that the UI is opened as `http://localhost:5173` and that the backend is at `HTTP_PORT` from the dev proxy.
+- **Settings page buttons do nothing:** expected for now; the save and add forms are not wired to the API yet.
+
 ## Features
 
 ### Core Capabilities
