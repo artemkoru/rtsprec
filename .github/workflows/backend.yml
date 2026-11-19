@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
+# Every check runs a Makefile target. Versions and package lists live in the Makefile.
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -17,23 +18,11 @@ jobs:
         with:
           go-version: '1.26.0'
 
-      - name: Run go vet
-        run: go vet ./internal/domain ./internal/repository ./internal/service ./internal/app
+      - name: Install tools
+        run: make tools
 
-      - name: Check gofmt
-        run: |
-          if gofmt -l ./internal/domain ./internal/repository ./internal/service ./internal/app | grep -q .; then
-            echo "❌ gofmt issues found:"
-            gofmt -d ./internal/domain ./internal/repository ./internal/service ./internal/app
-            exit 1
-          fi
-          echo "✓ All files properly formatted"
-
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
-
-      - name: Run golangci-lint
-        run: golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/app
+      - name: Lint
+        run: make lint
 
   unit-test:
     runs-on: ubuntu-latest
@@ -45,8 +34,8 @@ jobs:
         with:
           go-version: '1.26.0'
 
-      - name: Run unit tests
-        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/app
+      - name: Unit tests
+        run: make test-unit
 
   build:
     runs-on: ubuntu-latest
@@ -59,22 +48,10 @@ jobs:
         with:
           go-version: '1.26.0'
 
-      - name: Build backend binary
-        run: |
-          go build -o rtsprec ./cmd/rtsprec
-          echo "✓ Backend binary built successfully"
-
-      - name: Verify binary exists
-        run: |
-          if [ -f rtsprec ]; then
-            echo "✓ Binary created: $(ls -lh rtsprec)"
-          else
-            echo "::error::Binary not created"
-            exit 1
-          fi
+      - name: Build
+        run: make build
 
       - name: Upload binary artifact
-        if: success() && hashFiles('rtsprec') != ''
         uses: actions/upload-artifact@v4
         with:
           name: rtsprec-binary
@@ -92,19 +69,5 @@ jobs:
         with:
           go-version: '1.26.0'
 
-      - name: Download binary artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rtsprec-binary
-        continue-on-error: true
-
-      - name: Verify binary artifact
-        run: |
-          if [ -f rtsprec ]; then
-            echo "✓ Binary artifact downloaded: $(ls -lh rtsprec)"
-          else
-            echo "⚠️  Binary artifact not found (gortsplib incompatibility)"
-          fi
-
-      - name: Run integration tests
-        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/app
+      - name: Integration tests
+        run: make test-integration
