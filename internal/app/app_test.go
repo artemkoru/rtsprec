@@ -37,6 +37,7 @@ func newInitializedApp(t *testing.T) *App {
 	}
 	// Tests must not contact AWS: use the uploader without the connection check
 	a.newS3Uploader = storage.NewS3UploaderWithoutCheck
+	a.ui = testUI()
 	if err := a.Init(context.Background()); err != nil {
 		t.Fatalf("Init() error = %v", err)
 	}
@@ -229,6 +230,30 @@ func TestCameraStatusRouteExtractsCameraID(t *testing.T) {
 	// route matched and the ID was extracted; a plain 404 would mean no route matched.
 	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "camera not found") {
 		t.Fatalf("status = %d body = %q, want handler's camera-not-found response", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUIIsPublicAndAPIIsProtected(t *testing.T) {
+	a := newInitializedApp(t)
+
+	// UI shell and its routes need no session
+	for _, p := range []string{"/", "/live", "/archive", "/settings", "/login"} {
+		req := httptest.NewRequest(http.MethodGet, p, nil)
+		rec := httptest.NewRecorder()
+		a.server.Handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "UI-SHELL") {
+			t.Fatalf("GET %s without token: status=%d body=%q, want UI shell", p, rec.Code, rec.Body.String())
+		}
+	}
+
+	// API and media endpoints still require a session
+	for _, p := range []string{"/api/cameras", "/api/config/s3", "/hls/cam1/playlist.m3u8"} {
+		req := httptest.NewRequest(http.MethodGet, p, nil)
+		rec := httptest.NewRecorder()
+		a.server.Handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("GET %s without token: status=%d, want 401", p, rec.Code)
+		}
 	}
 }
 

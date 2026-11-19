@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/artemkoru/rtsprec/internal/config"
 	"github.com/artemkoru/rtsprec/internal/db"
 	"github.com/artemkoru/rtsprec/internal/storage"
+	"github.com/artemkoru/rtsprec/web"
 )
 
 // App represents the application with all its dependencies.
@@ -28,6 +30,7 @@ type App struct {
 	authManager    *auth.AuthManager
 	apiServer      *api.APIServer
 	hlsHandler     *api.HLSHandler
+	ui             fs.FS // built web UI served at /; tests may replace it
 
 	// ctx is cancelled by Shutdown and stops camera capture goroutines
 	ctx    context.Context
@@ -41,10 +44,16 @@ func New() (*App, error) {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
+	ui, err := web.Dist()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load embedded web UI: %w", err)
+	}
+
 	return &App{
 		config:        config,
 		logger:        slog.Default(),
 		newS3Uploader: storage.NewS3Uploader,
+		ui:            ui,
 	}, nil
 }
 
@@ -94,13 +103,18 @@ func (a *App) Init(ctx context.Context) error {
 	a.apiServer = api.NewAPIServer(database, configStore, a.archiveManager, s3Uploader)
 	a.hlsHandler = api.NewHLSHandler()
 
-	// Public routes (login, logout) bypass authentication; everything else requires a session
+	// Public: login/logout and the UI shell. Protected: /api/* and /hls/* (session required).
 	outer := http.NewServeMux()
 	registerPublicRoutes(outer, a)
 
-	mux := http.NewServeMux()
-	registerRoutes(mux, a)
-	outer.Handle("/", a.authManager.AuthMiddleware(mux))
+	apiMux := http.NewServeMux()
+	registerRoutes(apiMux, a)
+	protected := a.authManager.AuthMiddleware(apiMux)
+	outer.Handle("/api/", protected)
+	outer.Handle("/hls/", protected)
+
+	// UI shell and static assets are served without a session; the UI redirects to /login itself.
+	outer.Handle("/", newSPAHandler(a.ui))
 
 	// Logging, recovery and CORS wrap everything
 	handler := SetupMiddleware(outer, a.logger)
