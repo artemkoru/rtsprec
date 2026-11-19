@@ -20,7 +20,11 @@ func (a *App) StartCameras() {
 		logger.Error("failed to fetch cameras", "error", err)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			logger.Error("failed to close camera rows", "error", err)
+		}
+	}()
 
 	for rows.Next() {
 		var id, name, rtspURL, username, password string

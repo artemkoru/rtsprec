@@ -37,5 +37,5 @@ func registerRoutes(mux *http.ServeMux, a *App) {
 // handleLogout returns the same fixed response as the previous binary.
 func handleLogout(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, `{"status": "logged out"}`)
+	_, _ = fmt.Fprint(w, `{"status": "logged out"}`)
 }

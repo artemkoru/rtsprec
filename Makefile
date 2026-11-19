@@ -21,7 +21,7 @@ lint:
 	@echo "✓ go vet passed"
 	@echo ""
 	@echo "Running golangci-lint..."
-	@which golangci-lint > /dev/null || (echo "⚠️  golangci-lint not installed. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; exit 1)
+	@which golangci-lint > /dev/null || (echo "⚠️  golangci-lint not installed. Install with: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0"; exit 1)
 	golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/app
 	@echo "✓ golangci-lint passed"
 

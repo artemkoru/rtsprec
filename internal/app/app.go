@@ -120,7 +120,9 @@ func (a *App) Init(ctx context.Context) error {
 func (a *App) closeOnInitError() {
 	a.cancel()
 	if a.db != nil {
-		a.db.Close()
+		if err := a.db.Close(); err != nil {
+			a.logger.Error("database close error", "error", err)
+		}
 	}
 }
 
