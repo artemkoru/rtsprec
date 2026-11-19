@@ -14,7 +14,7 @@
 
 - [x] 3.1 Add a `web-build` target to the Makefile (`npm ci` and `npm run build` in `web/`, removes stale `web/dist` contents except `.gitkeep` first) and make `build` depend on it; verify `make build` produces a binary that serves `/` with the built `index.html`
 - [x] 3.2 Add a Node 20 build stage to the root `Dockerfile` that runs `npm ci` and `npm run build` before the Go build, copying `web/dist` into the Go build context; verify `make docker-build` succeeds and the image serves `/` with the UI
-- [ ] 3.3 Keep `make docker-up` checks working: it waits on `/api/cameras` returning 401; verify it still passes
+- [x] 3.3 Keep `make docker-up` checks working: it waits on `/api/cameras` returning 401; verify it still passes
 
 ## 4. CI
 
