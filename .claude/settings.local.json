@@ -20,7 +20,24 @@
       "Bash(git config *)",
       "Bash(git remote *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git branch *)",
+      "Bash(jq '.instruction' -r)",
+      "Bash(gh pr *)",
+      "Bash(make lint *)",
+      "Bash(make fmt *)",
+      "Bash(make test-unit *)",
+      "Bash(make build *)",
+      "Bash(go install *)",
+      "Bash(golangci-lint run *)",
+      "Bash(go vet *)",
+      "Bash(python3 -m yaml -c .github/workflows/backend.yml)",
+      "Bash(gh run *)",
+      "Bash(gofmt -w ./internal/)",
+      "Bash(git commit -m 'fix: apply gofmt formatting to all packages *)",
+      "Bash(~/.local/bin/golangci-lint run *)",
+      "Bash(go run *)"
     ]
   }
 }

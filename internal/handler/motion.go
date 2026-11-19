@@ -115,7 +115,9 @@ func (h *MotionHandler) writeJSON(w http.ResponseWriter, statusCode int, data in
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.Error("failed to encode JSON response", "error", err)
+	}
 }
 
 func (h *MotionHandler) writeError(w http.ResponseWriter, statusCode int, message string) {

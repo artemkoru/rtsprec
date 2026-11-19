@@ -74,5 +74,8 @@ func (eh *ErrorHandler) WriteError(w http.ResponseWriter, statusCode int, messag
 	w.WriteHeader(statusCode)
 
 	response := map[string]string{"error": message}
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		// Logging unavailable in error handler, continue gracefully
+		_ = err
+	}
 }
