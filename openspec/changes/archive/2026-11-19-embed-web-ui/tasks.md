@@ -30,7 +30,7 @@
 
 - [x] 6.1 Run `make lint` and `make test-unit` without Node installed on PATH for Go steps; verify both pass
 - [x] 6.2 Browser check against the Docker stack on `http://localhost:8080/`: the login page loads without a token, login reaches `/live`, Live, Archive and Settings render, and a direct visit to `/archive` after login works; verify all checks pass
-- [ ] 6.3 Open a pull request and verify the backend and frontend CI workflows pass
+- [x] 6.3 Open a pull request and verify the backend and frontend CI workflows pass
 
 ## Workflow follow-up
 
