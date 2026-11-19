@@ -94,21 +94,12 @@
 
 ## 10. Code Quality and Documentation
 
-- [ ] 10.1 Add package documentation comments to all new files in `internal/domain/`; verify each file has a package comment
-- [ ] 10.2 Add documentation comments to all repository interfaces; verify each interface has doc comments
-- [ ] 10.3 Add documentation comments to all service public methods; verify 90%+ of exported functions documented
-- [ ] 10.4 Verify no gofmt issues: run `gofmt -d ./internal/` and check for no diffs
-- [ ] 10.5 Verify vet passes: run `go vet ./internal/...` and check for no warnings
-- [ ] 10.6 Create ARCHITECTURE.md documenting the new package structure; verify file exists with package responsibilities
-
-## 10. Code Quality and Documentation
-
-- [~] 10.1 Add package documentation comments to all new files in `internal/domain/`; verify each file has a package comment
-- [~] 10.2 Add documentation comments to all repository interfaces; verify each interface has doc comments
-- [~] 10.3 Add documentation comments to all service public methods; verify 90%+ of exported functions documented
-- [~] 10.4 Verify no gofmt issues: run `gofmt -d ./internal/` and check for no diffs
-- [~] 10.5 Verify vet passes: run `go vet ./internal/...` and check for no warnings
-- [~] 10.6 Create ARCHITECTURE.md documenting the new package structure; verify file exists with package responsibilities
+- [x] 10.1 Add package documentation comments to all new files in `internal/domain/`; verify each file has a package comment
+- [x] 10.2 Add documentation comments to all repository interfaces; verify each interface has doc comments
+- [x] 10.3 Add documentation comments to all service public methods; verify 90%+ of exported functions documented
+- [x] 10.4 Verify no gofmt issues: run `gofmt -d ./internal/` and check for no diffs
+- [x] 10.5 Verify vet passes: run `go vet ./internal/...` and check for no warnings
+- [x] 10.6 Create ARCHITECTURE.md documenting the new package structure; verify file exists with package responsibilities
 
 **Status:** Ready to execute. Can proceed independently of compilation blockers to add documentation.
 
