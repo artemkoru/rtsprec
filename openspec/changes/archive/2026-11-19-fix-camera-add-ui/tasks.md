@@ -23,7 +23,7 @@
 ## 5. Verification
 
 - [x] 5.1 Run `npm run lint`, `npm run build` and `npm run test:e2e` locally; verify all pass
-- [ ] 5.2 Open a pull request and verify the frontend CI workflow, including the new e2e job, passes
+- [x] 5.2 Open a pull request and verify the frontend CI workflow, including the new e2e job, passes
 
 ## Workflow follow-up
 
