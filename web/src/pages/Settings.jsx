@@ -1,20 +1,74 @@
-import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../api.js';
+import React, { useState, useEffect, useCallback } from 'react';
+import { apiFetch, postJSON } from '../api.js';
+
+// Values the backend expects for the settings the form does not expose yet.
+// They match the defaults documented in the README.
+const CAMERA_DEFAULTS = {
+  motion_sensitivity: 50,
+  motion_timeout: 120,
+  video_duration_minutes: 15,
+  screenshot_interval_minutes: 0,
+};
+
+const EMPTY_CAMERA_FORM = { name: '', rtspUrl: '', username: '', password: '' };
 
 export default function Settings() {
   const [cameras, setCameras] = useState([]);
   const [activeTab, setActiveTab] = useState('cameras');
+  const [cameraForm, setCameraForm] = useState(EMPTY_CAMERA_FORM);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchCameras();
-  }, []);
-
-  const fetchCameras = async () => {
+  const loadCameras = useCallback(async () => {
     try {
       const data = await apiFetch('/api/cameras');
       setCameras(data || []);
     } catch (error) {
       console.error('Failed to fetch cameras:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCameras();
+  }, [loadCameras]);
+
+  const updateField = (field) => (event) => {
+    setCameraForm((form) => ({ ...form, [field]: event.target.value }));
+  };
+
+  const validateCameraForm = () => {
+    const errors = {};
+    if (!cameraForm.name.trim()) errors.name = 'Name is required';
+    if (!cameraForm.rtspUrl.trim()) errors.rtspUrl = 'RTSP URL is required';
+    return errors;
+  };
+
+  const handleAddCamera = async (event) => {
+    event.preventDefault();
+
+    const errors = validateCameraForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return; // nothing is sent until the required fields are filled
+    }
+
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      await postJSON('/api/cameras', {
+        name: cameraForm.name.trim(),
+        rtsp_url: cameraForm.rtspUrl.trim(),
+        username: cameraForm.username,
+        password: cameraForm.password,
+        ...CAMERA_DEFAULTS,
+      });
+      setCameraForm(EMPTY_CAMERA_FORM);
+      await loadCameras();
+    } catch (error) {
+      setSubmitError(error.message || 'Could not add the camera');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -37,13 +91,43 @@ export default function Settings() {
       {activeTab === 'cameras' && (
         <div className="tab-content">
           <h3>Camera Configuration</h3>
-          <div className="camera-form">
-            <input type="text" placeholder="Camera Name" />
-            <input type="text" placeholder="RTSP URL" />
-            <input type="text" placeholder="Username (optional)" />
-            <input type="password" placeholder="Password (optional)" />
-            <button>Add Camera</button>
-          </div>
+          <form className="camera-form" onSubmit={handleAddCamera} noValidate>
+            <input
+              type="text"
+              placeholder="Camera Name"
+              value={cameraForm.name}
+              onChange={updateField('name')}
+              aria-invalid={Boolean(fieldErrors.name)}
+            />
+            {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
+
+            <input
+              type="text"
+              placeholder="RTSP URL"
+              value={cameraForm.rtspUrl}
+              onChange={updateField('rtspUrl')}
+              aria-invalid={Boolean(fieldErrors.rtspUrl)}
+            />
+            {fieldErrors.rtspUrl && <span className="field-error">{fieldErrors.rtspUrl}</span>}
+
+            <input
+              type="text"
+              placeholder="Username (optional)"
+              value={cameraForm.username}
+              onChange={updateField('username')}
+            />
+            <input
+              type="password"
+              placeholder="Password (optional)"
+              value={cameraForm.password}
+              onChange={updateField('password')}
+            />
+
+            <button type="submit" disabled={submitting}>
+              {submitting ? 'Adding...' : 'Add Camera'}
+            </button>
+            {submitError && <p role="alert" className="field-error">{submitError}</p>}
+          </form>
 
           <div className="camera-list">
             {cameras.map((camera) => (

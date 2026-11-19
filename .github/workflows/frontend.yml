@@ -74,3 +74,46 @@ jobs:
             echo "❌ Build failed: dist directory not created"
             exit 1
           fi
+
+  e2e:
+    runs-on: ubuntu-latest
+    name: E2E Tests
+    needs: [ install, lint ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: web
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+        working-directory: web
+
+      - name: Start backend stack
+        run: |
+          docker compose up -d --build
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/cameras)
+            if [ "$code" = "401" ]; then echo "✓ Backend is up"; exit 0; fi
+            sleep 2
+          done
+          echo "❌ Backend did not answer"; exit 1
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        working-directory: web
+
+      - name: Backend logs on failure
+        if: failure()
+        run: docker compose logs backend
+
+      - name: Stop backend stack
+        if: always()
+        run: docker compose down -v
