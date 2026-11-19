@@ -1,0 +1,71 @@
+# Local stack: backend + S3-compatible server (SeaweedFS) + one-shot bucket init.
+# Start with `make docker-up`. Values below are for local use only; override with
+# environment variables or an .env file next to this file.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rtsprec-backend:local
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    environment:
+      DB_PATH: /home/rtsprec/rtsprec.db
+      ENCRYPTION_KEY_PATH: /home/rtsprec/encryption.key
+      HLS_OUTPUT_PATH: /home/rtsprec/hls
+      HTTP_PORT: "8080"
+      AUTH_METHOD: basic
+      AUTH_BASIC_USERNAME: ${AUTH_BASIC_USERNAME:-admin}
+      AUTH_BASIC_PASSWORD: ${AUTH_BASIC_PASSWORD:-change-me-local}
+      S3_BUCKET: ${S3_BUCKET:-rtsprec-local}
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-localaccess}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-localsecret}
+      AWS_ENDPOINT_URL: http://s3:8333
+      AWS_EC2_METADATA_DISABLED: "true"
+    volumes:
+      - backend-data:/home/rtsprec
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  s3:
+    image: chrislusf/seaweedfs:4.54
+    command: ["server", "-s3", "-s3.domainName=s3", "-dir=/data"]
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-localaccess}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-localsecret}
+    volumes:
+      - s3-data:/data
+    networks:
+      default:
+        aliases:
+          # Virtual-host bucket addressing: <bucket>.s3 must resolve to this container
+          - ${S3_BUCKET:-rtsprec-local}.s3
+    restart: unless-stopped
+
+  s3-init:
+    image: amazon/aws-cli:2.41.1
+    entrypoint: ["/bin/sh", "-c"]
+    # Wait for the S3 gateway, then create the bucket if it does not exist yet.
+    command:
+      - |
+        for i in $$(seq 1 60); do
+          aws --endpoint-url http://s3:8333 s3api list-buckets >/dev/null 2>&1 && break
+          sleep 1
+        done
+        aws --endpoint-url http://s3:8333 s3api head-bucket --bucket "$$S3_BUCKET" >/dev/null 2>&1 \
+          || aws --endpoint-url http://s3:8333 s3 mb "s3://$$S3_BUCKET"
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-localaccess}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-localsecret}
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET: ${S3_BUCKET:-rtsprec-local}
+    depends_on:
+      - s3
+
+volumes:
+  backend-data:
+  s3-data:

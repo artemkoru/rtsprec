@@ -73,6 +73,22 @@ The frontend will be available at `http://localhost:5173` in development.
 
 Run the backend and the web UI on one machine. The UI talks to the backend through the Vite dev proxy, so both are reached on `localhost`.
 
+### Option A: backend in Docker (recommended)
+
+Docker Compose starts the backend and a local S3-compatible server (SeaweedFS). Nothing is installed on the host except Docker and Node.js.
+
+```bash
+make docker-up        # builds the image if needed, starts the stack, waits until the API answers
+```
+
+Then continue with steps 4–6 below. Steps 1–3 are only needed for the native run (Option B).
+
+- Sign in as `admin` with password `change-me-local`. Override the values with environment variables or an `.env` file next to `compose.yaml`: `AUTH_BASIC_USERNAME`, `AUTH_BASIC_PASSWORD`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `HTTP_PORT`.
+- `make docker-logs` follows the backend logs.
+- `make docker-down` stops the stack and keeps the data. To reset everything, run `docker compose down -v`.
+
+### Option B: native run
+
 ### 1. Prerequisites
 
 - Go 1.26.0, Node.js 20, npm
@@ -320,20 +336,13 @@ sudo systemctl start rtsprec
 
 ## Known Issues & Troubleshooting
 
-### gortsplib v4 Incompatibility
+Current limitations:
 
-The project has a pre-existing incompatibility with gortsplib v4.16.3 in the RTSP capture module (`internal/capture/`). This does not affect the refactored core layers (domain, service, repository, handler).
+- **Logout does not invalidate the token on the server.** The UI signs out, but a copied token works until it expires (24 hours).
+- **Settings does not save cameras or settings yet.** Add cameras through the API (see Local Run, step 6).
+- **The encoder path `/var/cache/rtsprec/video` is hard-coded.** Recording needs that directory to exist and be writable.
 
-**Impact:**
-- Full binary build may fail when including capture package
-- Refactored packages compile and test cleanly
-- CI builds test only refactored packages
-- Running without capture functionality is possible
-
-**Workaround:**
-See [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for detailed information and mitigation strategies.
-
-For other issues and troubleshooting, see [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+For details and other issues, see [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 ## CI/CD
 
