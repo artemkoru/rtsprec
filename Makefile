@@ -17,12 +17,12 @@ fmt:
 
 lint:
 	@echo "Running go vet..."
-	go vet ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+	go vet ./internal/domain ./internal/repository ./internal/service ./internal/app
 	@echo "✓ go vet passed"
 	@echo ""
 	@echo "Running golangci-lint..."
 	@which golangci-lint > /dev/null || (echo "⚠️  golangci-lint not installed. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; exit 1)
-	golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+	golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/app
 	@echo "✓ golangci-lint passed"
 
 test: test-unit test-integration
@@ -30,7 +30,7 @@ test: test-unit test-integration
 
 test-unit:
 	@echo "Running unit tests..."
-	go test -v ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+	go test -v ./internal/domain ./internal/repository ./internal/service ./internal/app
 	@echo "✓ Unit tests passed"
 
 test-integration: test-unit

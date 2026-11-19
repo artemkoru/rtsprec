@@ -17,15 +17,16 @@ useradd -s /sbin/nologin rtsprec
 ```bash
 mkdir -p /opt/rtsprec/data /var/cache/rtsprec
 cp /tmp/rtsprec /opt/rtsprec/
-cp config.example.yaml /opt/rtsprec/config.yaml
 chown -R rtsprec:rtsprec /opt/rtsprec /var/cache/rtsprec
 chmod 755 /opt/rtsprec/rtsprec
-chmod 600 /opt/rtsprec/config.yaml
 ```
 
+Put the settings from [Environment Variables](#environment-variables) into an environment file readable only by the service user, for example `/etc/rtsprec/env` with `chmod 600`.
+
 ### 4. Configure Service
+
+Create `/etc/systemd/system/rtsprec.service` with `EnvironmentFile=/etc/rtsprec/env` and `ExecStart=/opt/rtsprec/rtsprec`, then:
 ```bash
-cp deployments/rtsprec.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable rtsprec
 systemctl start rtsprec
@@ -37,6 +38,32 @@ systemctl status rtsprec
 curl http://localhost:8080/api/cameras
 ```
 
+## Environment Variables
+
+The binary reads its configuration only from environment variables. The `-config` flag and YAML file are no longer used.
+
+| Variable | Default | Description |
+|---|---|---|
+| `DB_PATH` | `./rtsprec.db` | SQLite database file |
+| `HTTP_PORT` | `8080` | HTTP listen port |
+| `LOG_LEVEL` | `info` | Log level |
+| `ENVIRONMENT` | `development` | Deployment environment name |
+| `ENCRYPTION_KEY_PATH` | `/opt/rtsprec/.encryption.key` | Key file for encrypted config store |
+| `HLS_OUTPUT_PATH` | `/var/cache/rtsprec/hls` | Directory for HLS segments |
+| `HLS_SEGMENT_DURATION_SECONDS` | `2` | HLS segment length |
+| `HLS_SEGMENTS_PER_LIST` | `5` | Segments listed in each playlist |
+| `AUTH_METHOD` | `basic` | `basic` or `oidc` |
+| `AUTH_BASIC_USERNAME` | `admin` | Basic auth username |
+| `AUTH_BASIC_PASSWORD` | `changeme` | Basic auth password (change it) |
+| `AUTH_OIDC_PROVIDER` | `google` | `google` or `yandex` (when `AUTH_METHOD=oidc`) |
+| `AUTH_OIDC_CLIENT_ID` | empty | OIDC client ID |
+| `AUTH_OIDC_SECRET` | empty | OIDC client secret |
+| `S3_BUCKET` | `rtsprec-videos` | S3 bucket for recordings |
+| `S3_REGION` | `us-east-1` | S3 region |
+| `S3_PATH_PREFIX` | `surveillance` | Key prefix inside the bucket |
+| `S3_ACCESS_KEY_ID` | empty | S3 access key ID |
+| `S3_SECRET_ACCESS_KEY` | empty | S3 secret access key |
+
 ## Rollback
 ```bash
 cp /opt/rtsprec.old/rtsprec /opt/rtsprec/
@@ -44,7 +71,7 @@ systemctl restart rtsprec
 ```
 
 ## Configuration Checklist
-- [ ] config.yaml created with S3 credentials
+- [ ] Environment file created with S3 credentials
 - [ ] OIDC or Basic Auth configured
 - [ ] Cameras added in web UI
 - [ ] Motion sensitivity tuned for environment

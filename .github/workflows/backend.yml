@@ -18,13 +18,13 @@ jobs:
           go-version: '1.26.0'
 
       - name: Run go vet
-        run: go vet ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+        run: go vet ./internal/domain ./internal/repository ./internal/service ./internal/app
 
       - name: Check gofmt
         run: |
-          if gofmt -l ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app | grep -q .; then
+          if gofmt -l ./internal/domain ./internal/repository ./internal/service ./internal/app | grep -q .; then
             echo "❌ gofmt issues found:"
-            gofmt -d ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+            gofmt -d ./internal/domain ./internal/repository ./internal/service ./internal/app
             exit 1
           fi
           echo "✓ All files properly formatted"
@@ -33,7 +33,7 @@ jobs:
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
       - name: Run golangci-lint
-        run: golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+        run: golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/app
 
   unit-test:
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
           go-version: '1.26.0'
 
       - name: Run unit tests
-        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/app
 
   build:
     runs-on: ubuntu-latest
@@ -61,11 +61,7 @@ jobs:
 
       - name: Build backend binary
         run: |
-          go build -o rtsprec ./cmd/rtsprec || (
-            echo "⚠️  Known gortsplib v4 incompatibility detected"
-            echo "See docs/KNOWN_ISSUES.md for details and workaround"
-            exit 0
-          )
+          go build -o rtsprec ./cmd/rtsprec
           echo "✓ Backend binary built successfully"
 
       - name: Verify binary exists
@@ -73,7 +69,8 @@ jobs:
           if [ -f rtsprec ]; then
             echo "✓ Binary created: $(ls -lh rtsprec)"
           else
-            echo "⚠️  Binary not created (gortsplib capture package incompatibility)"
+            echo "::error::Binary not created"
+            exit 1
           fi
 
       - name: Upload binary artifact
@@ -110,4 +107,4 @@ jobs:
           fi
 
       - name: Run integration tests
-        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/app

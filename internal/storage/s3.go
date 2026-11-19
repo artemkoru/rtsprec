@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
@@ -26,10 +27,33 @@ type S3Uploader struct {
 	retryBackoff time.Duration
 }
 
+// NewS3Uploader creates an uploader and verifies that the bucket is reachable.
 func NewS3Uploader(region, bucket, pathPrefix, accessKey, secretKey string) (*S3Uploader, error) {
-	cfg, err := config.LoadDefaultConfig(context.Background(),
+	uploader, err := NewS3UploaderWithoutCheck(region, bucket, pathPrefix, accessKey, secretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := uploader.TestConnection(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to connect to S3: %w", err)
+	}
+
+	return uploader, nil
+}
+
+// NewS3UploaderWithoutCheck creates an uploader without contacting S3.
+// Credentials come from accessKey/secretKey when set, otherwise from the default AWS chain.
+func NewS3UploaderWithoutCheck(region, bucket, pathPrefix, accessKey, secretKey string) (*S3Uploader, error) {
+	opts := []func(*config.LoadOptions) error{
 		config.WithRegion(region),
-	)
+	}
+	if accessKey != "" {
+		opts = append(opts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(accessKey, secretKey, ""),
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.Background(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
@@ -37,7 +61,7 @@ func NewS3Uploader(region, bucket, pathPrefix, accessKey, secretKey string) (*S3
 	client := s3.NewFromConfig(cfg)
 	presigner := s3.NewPresignClient(client)
 
-	uploader := &S3Uploader{
+	return &S3Uploader{
 		client:       client,
 		bucket:       bucket,
 		pathPrefix:   pathPrefix,
@@ -45,14 +69,7 @@ func NewS3Uploader(region, bucket, pathPrefix, accessKey, secretKey string) (*S3
 		presigner:    presigner,
 		maxRetries:   3,
 		retryBackoff: 2 * time.Second,
-	}
-
-	// Test connection
-	if err := uploader.TestConnection(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to connect to S3: %w", err)
-	}
-
-	return uploader, nil
+	}, nil
 }
 
 func (u *S3Uploader) TestConnection(ctx context.Context) error {
