@@ -1,0 +1,39 @@
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+    - internal/capture
+
+linters:
+  enable-all: true
+  disable:
+    - exhaustivestruct  # Too strict for our use case
+    - golint            # Deprecated
+    - maligned          # Deprecated
+    - varcheck          # Deprecated
+
+issues:
+  exclude-rules:
+    # Exclude linting errors from capture package (pre-existing gortsplib incompatibility)
+    - path: internal/capture
+      linters:
+        - all
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+
+linters-settings:
+  staticcheck:
+    checks: ["all"]
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  unused:
+    check-exported: true
+
+  gofmt:
+    simplify: true

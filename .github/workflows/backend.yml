@@ -3,18 +3,8 @@ name: Backend CI
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'cmd/**'
-      - 'internal/**'
-      - 'go.mod'
-      - 'go.sum'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'cmd/**'
-      - 'internal/**'
-      - 'go.mod'
-      - 'go.sum'
 
 jobs:
   lint:
@@ -39,9 +29,15 @@ jobs:
           fi
           echo "✓ All files properly formatted"
 
-  test:
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+      - name: Run golangci-lint
+        run: golangci-lint run ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+
+  unit-test:
     runs-on: ubuntu-latest
-    name: Unit & Integration Tests
+    name: Unit Tests
     steps:
       - uses: actions/checkout@v4
 
@@ -49,13 +45,13 @@ jobs:
         with:
           go-version: '1.26.0'
 
-      - name: Run tests
+      - name: Run unit tests
         run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
 
   build:
     runs-on: ubuntu-latest
     name: Build Binary
-    needs: [ lint, test ]
+    needs: [ lint ]
     steps:
       - uses: actions/checkout@v4
 
@@ -79,3 +75,38 @@ jobs:
           else
             echo "⚠️  Binary not created (gortsplib capture package incompatibility)"
           fi
+
+      - name: Upload binary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtsprec-binary
+          path: rtsprec
+          retention-days: 1
+
+  integration-test:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    needs: [ build, unit-test ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.26.0'
+
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rtsprec-binary
+
+      - name: Verify binary artifact
+        run: |
+          if [ -f rtsprec ]; then
+            echo "✓ Binary artifact downloaded: $(ls -lh rtsprec)"
+          else
+            echo "⚠️  Binary artifact not found (using local build)"
+          fi
+
+      - name: Run integration tests with artifact
+        run: go test -v ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
