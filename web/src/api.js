@@ -54,3 +54,30 @@ export async function login(username, password) {
 export async function logout() {
   await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
 }
+
+// postJSON sends a JSON body with POST. It follows the same rules as apiFetch:
+// 401 redirects to the login page, other failures throw ApiError with the status
+// and the server's message when the body has one.
+export async function postJSON(path, body) {
+  const response = await fetch(path, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (response.status === 401) {
+    if (window.location.pathname !== '/login') {
+      window.location.assign('/login')
+    }
+    throw new ApiError(401, 'session expired or missing')
+  }
+
+  if (!response.ok) {
+    const text = (await response.text().catch(() => '')).trim()
+    throw new ApiError(response.status, text || `request failed with status ${response.status}`)
+  }
+
+  const text = await response.text()
+  return text ? JSON.parse(text) : null
+}
