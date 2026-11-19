@@ -1,3 +1,4 @@
+// Package domain defines the core business entities and value objects for the RTSP surveillance system.
 package domain
 
 import "fmt"
