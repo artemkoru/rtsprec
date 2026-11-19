@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../api.js';
 
 export default function Archive() {
   const [cameras, setCameras] = useState([]);
@@ -20,8 +21,7 @@ export default function Archive() {
 
   const fetchCameras = async () => {
     try {
-      const response = await fetch('/api/cameras');
-      const data = await response.json();
+      const data = await apiFetch('/api/cameras');
       setCameras(data || []);
       if (data && data.length > 0) {
         setSelectedCamera(data[0].id);
@@ -34,10 +34,9 @@ export default function Archive() {
   const fetchTimeline = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const data = await apiFetch(
         `/api/archive?camera_id=${selectedCamera}&date=${selectedDate}`
       );
-      const data = await response.json();
       setTimeline(data || []);
     } catch (error) {
       console.error('Failed to fetch timeline:', error);

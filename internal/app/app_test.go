@@ -168,6 +168,20 @@ func TestLoginIsReachableWithoutToken(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), `"token"`) {
 		t.Fatalf("login body %q has no token", rec.Body.String())
 	}
+
+	// The browser must send the session cookie to every API path, so its Path must be "/"
+	var session *http.Cookie
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == "session_token" {
+			session = c
+		}
+	}
+	if session == nil {
+		t.Fatal("login did not set session_token cookie")
+	}
+	if session.Path != "/" {
+		t.Fatalf("session_token Path = %q, want \"/\"", session.Path)
+	}
 }
 
 func TestLoginWithWrongPasswordIsRejectedByHandler(t *testing.T) {

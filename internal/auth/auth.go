@@ -236,6 +236,7 @@ func (am *AuthManager) HandleBasicLogin(w http.ResponseWriter, r *http.Request) 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
 		Value:    token,
+		Path:     "/", // without Path the browser scopes the cookie to /api/auth
 		Expires:  time.Now().Add(am.sessionExpiration),
 		HttpOnly: true,
 		Secure:   true, // Set to false for dev, true for production with HTTPS
