@@ -1,0 +1,26 @@
+[Unit]
+Description=RTSP Camera Surveillance System
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rtsprec
+Group=rtsprec
+WorkingDirectory=/opt/rtsprec
+ExecStart=/opt/rtsprec/rtsprec
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rtsprec
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/rtsprec/data /var/cache/rtsprec
+
+[Install]
+WantedBy=multi-user.target
