@@ -1,0 +1,80 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'web/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'web/**'
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    name: Install Dependencies
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: web
+
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: web
+
+      - name: Run oxlint
+        run: npm run lint
+        working-directory: web
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    needs: [ install, lint ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: web
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: web
+
+      - name: Verify build artifacts
+        run: |
+          if [ -d web/dist ]; then
+            echo "✓ Build artifacts created:"
+            ls -lh web/dist/
+          else
+            echo "❌ Build failed: dist directory not created"
+            exit 1
+          fi
