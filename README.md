@@ -32,12 +32,10 @@ RTSP Surveillance is a full-stack surveillance platform featuring:
 git clone https://github.com/artemkoru/rtsprec.git
 cd rtsprec
 
-# Copy and configure example config
-cp config.example.yaml config.yaml
-# Edit config.yaml with your settings:
-# - AWS credentials and S3 bucket
-# - RTSP camera URLs
+# Configure via environment variables (see the Configuration section):
+# - S3 credentials and bucket
 # - Authentication settings
+# - Database and encryption key paths
 
 # Build the backend
 go build -o rtsprec ./cmd/rtsprec
@@ -127,27 +125,20 @@ cmd/rtsprec (main entry point)
 
 ## Configuration
 
-The system is configured via `config.yaml`. See `config.example.yaml` for a template with all available options:
+The system is configured only through environment variables. The full list with defaults is in [docs/deployment.md](docs/deployment.md#environment-variables). Example:
 
-```yaml
-server:
-  port: 8080
-  host: "0.0.0.0"
-
-aws:
-  region: "us-east-1"
-  s3_bucket: "my-surveillance-bucket"
-  access_key_id: "YOUR_KEY"
-  secret_access_key: "YOUR_SECRET"
-
-auth:
-  method: "oidc"  # or "basic"
-  oidc_provider: "google"
-  oidc_client_id: "..."
-  oidc_secret: "..."
-
-database:
-  path: "/opt/rtsprec/data/rtsprec.db"
+```bash
+export HTTP_PORT=8080
+export DB_PATH=/opt/rtsprec/data/rtsprec.db
+export S3_BUCKET=my-surveillance-bucket
+export S3_REGION=us-east-1
+export S3_ACCESS_KEY_ID=YOUR_KEY
+export S3_SECRET_ACCESS_KEY=YOUR_SECRET
+export AUTH_METHOD=oidc            # or basic
+export AUTH_OIDC_PROVIDER=google
+export AUTH_OIDC_CLIENT_ID=...
+export AUTH_OIDC_SECRET=...
+./rtsprec
 ```
 
 ## Testing
@@ -156,7 +147,7 @@ database:
 
 ```bash
 # Run all backend tests (refactored packages)
-go test ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+go test ./internal/domain ./internal/repository ./internal/service ./internal/app
 
 # Run with verbose output
 go test -v ./internal/...
@@ -214,17 +205,15 @@ rtsprec/
 │   ├── deployment.md      # Deployment instructions
 │   ├── KNOWN_ISSUES.md    # Known limitations and workarounds
 │   └── testing.md         # Testing strategy
-└── config.example.yaml    # Example configuration
 ```
 
 ### Clean Architecture Layers
 
-The refactored core (domain, repository, service, handler) follows clean architecture principles:
+The refactored core (domain, repository, service) follows clean architecture principles:
 
 - **Domain Layer** (`internal/domain/`): Pure business entities with no dependencies
 - **Repository Layer** (`internal/repository/`): Data access abstraction with multiple implementations
 - **Service Layer** (`internal/service/`): Business logic orchestration, decoupled from storage details
-- **Handler Layer** (`internal/handler/`): HTTP request/response mapping with error conversion
 - **App Layer** (`internal/app/`): Dependency injection and application wiring
 
 For detailed design decisions, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -239,9 +228,7 @@ For deployment instructions including Docker, systemd, and cloud platforms, see 
 # Build release binary
 go build -o rtsprec ./cmd/rtsprec
 
-# Configure environment
-cp config.example.yaml /etc/rtsprec/config.yaml
-# Edit configuration as needed
+# Configure environment variables (see docs/deployment.md)
 
 # Run as systemd service (see deployment.md)
 sudo systemctl start rtsprec

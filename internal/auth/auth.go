@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -221,7 +222,7 @@ func (am *AuthManager) HandleBasicLogin(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var req LoginRequest
-	if err := NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
@@ -238,14 +239,9 @@ func (am *AuthManager) HandleBasicLogin(w http.ResponseWriter, r *http.Request) 
 		Expires:  time.Now().Add(am.sessionExpiration),
 		HttpOnly: true,
 		Secure:   true, // Set to false for dev, true for production with HTTPS
-		SameSite: http.SameSiteLax,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, `{"token": "%s"}`, token)
-}
-
-// Placeholder for json decoder
-func NewDecoder(r interface{}) interface{} {
-	return r
 }

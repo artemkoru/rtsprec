@@ -1,17 +1,14 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/artemkoru/rtsprec/internal/archive"
-	"github.com/artemkoru/rtsprec/internal/capture"
 	"github.com/artemkoru/rtsprec/internal/config"
 	"github.com/artemkoru/rtsprec/internal/db"
 	"github.com/artemkoru/rtsprec/internal/motion"
@@ -112,8 +109,7 @@ func (api *APIServer) HandleAddCamera(w http.ResponseWriter, r *http.Request) {
 
 // Camera Status Endpoint
 func (api *APIServer) HandleCameraStatus(w http.ResponseWriter, r *http.Request) {
-	cameraID := strings.TrimPrefix(r.URL.Path, "/api/cameras/")
-	cameraID = strings.TrimSuffix(cameraID, "/status")
+	cameraID := r.PathValue("id")
 
 	var status string
 	err := api.db.Conn().QueryRow(`SELECT status FROM cameras WHERE id = ?`, cameraID).Scan(&status)
@@ -136,7 +132,6 @@ func (api *APIServer) HandleGetConfig(w http.ResponseWriter, r *http.Request) {
 	configType := strings.TrimPrefix(r.URL.Path, "/api/config/")
 
 	var value string
-	var err error
 
 	switch configType {
 	case "s3":

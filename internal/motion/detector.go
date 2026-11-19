@@ -2,9 +2,6 @@ package motion
 
 import (
 	"context"
-	"fmt"
-	"image"
-	"image/color"
 	"log/slog"
 	"sync"
 	"time"
@@ -68,7 +65,6 @@ func (md *MotionDetector) Start(ctx context.Context, frameChan <-chan capture.Fr
 
 func (md *MotionDetector) run(ctx context.Context, frameChan <-chan capture.FrameData) {
 	var previousFrame []byte
-	frameBuffer := make([]image.Image, 0, md.frameSkip)
 
 	for {
 		select {

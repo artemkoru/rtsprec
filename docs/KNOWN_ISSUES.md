@@ -2,50 +2,18 @@
 
 ## Pre-existing Issues
 
-### gortsplib v4 API Incompatibility
+### gortsplib API Incompatibility (resolved)
 
-**Status:** Pre-existing (not caused by recent refactoring)
+**Status:** Resolved in `use-app-entrypoint`. `internal/capture` now uses gortsplib v5.7.0.
 
 **Affected Component:** `internal/capture/rtsp_reader.go`
 
-**Issue:** The project imports from non-existent subpackages in gortsplib v4.16.3:
-- `github.com/bluenviron/gortsplib/v4/pkg/base`
-- `github.com/bluenviron/gortsplib/v4/pkg/formats`
-- `github.com/bluenviron/gortsplib/v4/pkg/frames`
+**Previous issue:** The code imported `github.com/bluenviron/gortsplib/v4/pkg/base`, `.../pkg/formats` and `.../pkg/frames`, which do not exist in gortsplib v4.16.3. The build of `internal/capture`, `internal/api` and `internal/app` failed.
 
-These subpackages do not exist in the installed version. The gortsplib API has changed significantly between versions.
-
-**Impact:**
-- Full binary build fails when including the capture package
-- Prevents complete RTSP stream capture functionality
-- Does not affect refactored core layers (domain, service, repository, handler)
-- Refactored packages compile and test cleanly in isolation
-
-**Current Workaround:**
-1. The CI pipeline (`backend.yml`) tests only the refactored packages which pass cleanly
-2. Full binary build attempts are logged but non-blocking
-3. The system can operate without RTSP capture in limited scenarios
-
-**Mitigation Strategies:**
-
-**Option A: Update gortsplib** (Recommended for long-term)
-```bash
-# Update to a compatible gortsplib version or fix import paths
-go get -u github.com/bluenviron/gortsplib/v4@latest
-
-# Review and update internal/capture/rtsp_reader.go imports
-# Reference: https://github.com/bluenviron/gortsplib
-```
-
-**Option B: Isolate capture functionality** (Short-term)
-- Build the system without the capture package for testing
-- Develop capture functionality in isolation
-- Plan gortsplib upgrade separately
-
-**Option C: Implement alternative RTSP library**
-- Replace gortsplib with an alternative RTSP library
-- Requires refactoring of capture module
-- More involved but may be necessary if gortsplib is abandoned
+**Resolution:**
+- `go.mod` depends on `github.com/bluenviron/gortsplib/v5` v5.7.0; the v4 requirement was removed by `go mod tidy`.
+- `RTSPReader` uses the v5 client (`gortsplib.Client`, `base.ParseURL`, `desc.FindFormat`, `OnPacketRTP`). Credentials are passed in the URL user info.
+- Packages `internal/capture`, `internal/motion`, `internal/encoder` and `internal/api` build and pass `go vet`.
 
 ## Refactoring Status
 
@@ -61,29 +29,20 @@ The gortsplib issue is pre-refactoring and orthogonal to the architecture improv
 
 ### Backend CI Workflow (`backend.yml`)
 
-The backend CI workflow is configured to handle the gortsplib issue gracefully:
+The backend CI build step is blocking: a failed `go build -o rtsprec ./cmd/rtsprec` fails the job. The former non-blocking fallback for the gortsplib issue has been removed.
 
 ```yaml
 build:
   - name: Build backend binary
     run: |
-      go build -o rtsprec ./cmd/rtsprec || (
-        echo "⚠️  Known gortsplib v4 incompatibility detected"
-        echo "See docs/KNOWN_ISSUES.md for details"
-        exit 0  # Non-blocking - CI continues
-      )
+      go build -o rtsprec ./cmd/rtsprec
 ```
-
-**Behavior:**
-- If build succeeds: Binary is created and verified
-- If build fails: Warning is logged, CI continues (non-blocking)
-- Tests and lint always run first and determine status
 
 ### Test Coverage
 
 Backend tests are limited to refactored packages:
 ```bash
-go test ./internal/domain ./internal/repository ./internal/service ./internal/handler ./internal/app
+go test ./internal/domain ./internal/repository ./internal/service ./internal/app
 ```
 
 This ensures:

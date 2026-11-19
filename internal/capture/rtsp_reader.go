@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"time"
 
-	"github.com/bluenviron/gortsplib/v4"
-	"github.com/bluenviron/gortsplib/v4/pkg/base"
-	"github.com/bluenviron/gortsplib/v4/pkg/formats"
-	"github.com/bluenviron/gortsplib/v4/pkg/frames"
+	"github.com/bluenviron/gortsplib/v5"
+	"github.com/bluenviron/gortsplib/v5/pkg/base"
+	"github.com/bluenviron/gortsplib/v5/pkg/format"
+	"github.com/pion/rtp"
 )
 
 type FrameData struct {
@@ -85,76 +86,79 @@ func (r *RTSPReader) run(ctx context.Context) {
 }
 
 func (r *RTSPReader) connect(ctx context.Context) error {
-	conn := gortsplib.NewClient(gortsplib.ClientOptions{})
-	defer conn.Close()
+	u, err := base.ParseURL(r.rtspURL)
+	if err != nil {
+		return fmt.Errorf("invalid rtsp url: %w", err)
+	}
+
+	// Credentials are carried in the URL user info in gortsplib v5
+	if r.username != "" {
+		(*url.URL)(u).User = url.UserPassword(r.username, r.password)
+	}
 
 	r.logger.Info("connecting to RTSP stream", "url", r.rtspURL)
 
-	// Set up authentication
-	if r.username != "" {
-		conn.SetUsername(r.username)
-		conn.SetPassword(r.password)
+	c := &gortsplib.Client{
+		Scheme:      u.Scheme,
+		Host:        u.Host,
+		ReadTimeout: 10 * time.Second,
 	}
+	if err := c.Start(); err != nil {
+		return fmt.Errorf("failed to start client: %w", err)
+	}
+	defer c.Close()
 
-	// Connect with timeout
-	connectCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	_, err := conn.Describe(connectCtx, r.rtspURL)
+	desc, _, err := c.Describe(u)
 	if err != nil {
 		return fmt.Errorf("failed to describe stream: %w", err)
 	}
 
 	r.logger.Info("connected to RTSP stream")
 
-	// Set up frame handling
-	var videoTrackIndex int
-	videoTrack := conn.GetMediaByKind(base.StreamTypeVideo)
-	if videoTrack == nil {
-		return fmt.Errorf("no video track found")
-	}
-
-	// Get video codec info
-	videoFormat := videoTrack.GetFormat(formats.H264{})
-	if videoFormat == nil {
-		videoFormat = videoTrack.GetFormat(formats.H265{})
-		if videoFormat == nil {
-			return fmt.Errorf("unsupported video codec")
+	// Find a supported video format: H264 first, then H265
+	var h264Format *format.H264
+	var forma format.Format
+	medi := desc.FindFormat(&h264Format)
+	if medi != nil {
+		forma = h264Format
+	} else {
+		var h265Format *format.H265
+		medi = desc.FindFormat(&h265Format)
+		if medi == nil {
+			return fmt.Errorf("no supported video track found")
 		}
+		forma = h265Format
 	}
 
-	// Set up frame receiver
-	conn.OnPacketRTP(videoTrackIndex, videoTrack, func(pkt *rtp.Packet) {
-		r.handleFrame(pkt, videoTrack)
+	if _, err := c.Setup(desc.BaseURL, medi, 0, 0); err != nil {
+		return fmt.Errorf("failed to setup video track: %w", err)
+	}
+
+	c.OnPacketRTP(medi, forma, func(pkt *rtp.Packet) {
+		r.handleFrame(pkt)
 	})
 
-	// Play the stream
-	playCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	_, err = conn.Play(playCtx, nil)
-	if err != nil {
+	if _, err := c.Play(nil); err != nil {
 		return fmt.Errorf("failed to play stream: %w", err)
 	}
 
 	r.logger.Info("RTSP stream playing")
 
-	// Keep connection alive until context is done or stop is called
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-r.stopChan:
-			return fmt.Errorf("reader stopped")
-		default:
-		}
+	// Block until the client fails, the context ends, or Stop is called
+	waitErr := make(chan error, 1)
+	go func() { waitErr <- c.Wait() }()
 
-		// Check if connection is still alive by reading from conn
-		time.Sleep(100 * time.Millisecond)
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-r.stopChan:
+		return fmt.Errorf("reader stopped")
+	case err := <-waitErr:
+		return fmt.Errorf("rtsp connection closed: %w", err)
 	}
 }
 
-func (r *RTSPReader) handleFrame(pkt *rtp.Packet, track *gortsplib.MediaEntity) {
+func (r *RTSPReader) handleFrame(pkt *rtp.Packet) {
 	// Convert RTP packet to frame data
 	frameData := FrameData{
 		Timestamp: time.Now(),
